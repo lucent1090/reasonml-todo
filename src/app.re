@@ -9,16 +9,19 @@ type item = {
 };
 
 module TodoItem = {
+  let itemStyle =
+    css([margin("0.5rem 0 0 1.5rem"), display("flex"), alignItems("center")]);
   let component = ReasonReact.statelessComponent("TodoItem");
   let make = (~item: item, ~onToggle, _children) => {
     ...component,
     render: _self =>
-      <div onClick=(_evt => onToggle())>
+      <div className=itemStyle onClick=(_evt => onToggle())>
         <input
+          className=(css([marginRight("10px")]))
           _type="checkbox"
           checked=(Js.Boolean.to_js_boolean(item.completed))
         />
-        (str(item.text))
+        <div> (str(item.text)) </div>
       </div>
   };
 };
@@ -31,6 +34,8 @@ let valueFromEvent = evt : string => (
 
 module Input = {
   type state = string;
+  let inputStyle =
+    css([width("18rem"), height("1.5rem"), marginBottom("0.5rem")]);
   let component = ReasonReact.reducerComponent("Input");
   let make = (~onSubmit, _children) => {
     ...component,
@@ -38,6 +43,7 @@ module Input = {
     reducer: (newText, _text) => ReasonReact.Update(newText),
     render: ({state: text, reduce}) =>
       <input
+        className=inputStyle
         value=text
         _type="text"
         placeholder="What do you wanna do?"
@@ -53,9 +59,31 @@ module Input = {
   };
 };
 
-/* let paper = css [
-     width "100px"
-   ]; */
+let paper =
+  css([
+    width("25rem"),
+    height("28rem"),
+    overflow("auto"),
+    boxShadow("5px 3px 3px rgba(0,0,0,0.15)"),
+    marginTop("1rem"),
+    border("1px solid #eee"),
+    display("flex"),
+    flexDirection("column"),
+    alignItems("center"),
+    position("relative")
+  ]);
+
+let todolist =
+  css([
+    width("20rem"),
+    height("20rem"),
+    display("flex"),
+    flexWrap("wrap"),
+    flexDirection("column")
+  ]);
+
+let footer = css([position("absolute"), bottom("1rem"), left("1rem")]);
+
 type state = {items: list(item)};
 
 type action =
@@ -80,7 +108,7 @@ let toggledItem = (id, items) =>
 let make = _children => {
   ...component,
   initialState: () => {
-    items: [{id: 0, completed: false, text: "clean your heart."}]
+    items: [{id: 0, completed: false, text: "Do something."}]
   },
   reducer: (action, {items}) =>
     switch action {
@@ -92,23 +120,25 @@ let make = _children => {
     let summary =
       nItems > 1 ?
         string_of_int(nItems) ++ " items" : string_of_int(nItems) ++ " item";
-    <div>
+    <div className=paper>
       <h2> (str("TODO List")) </h2>
       <Input onSubmit=(reduce(text => AddItem(text))) />
-      (
-        List.map(
-          item =>
-            <TodoItem
-              key=(string_of_int(item.id))
-              item
-              onToggle=(reduce(() => ToggleItem(item.id)))
-            />,
-          items
+      <div className=todolist>
+        (
+          List.map(
+            item =>
+              <TodoItem
+                key=(string_of_int(item.id))
+                item
+                onToggle=(reduce(() => ToggleItem(item.id)))
+              />,
+            items
+          )
+          |> Array.of_list
+          |> ReasonReact.arrayToElement
         )
-        |> Array.of_list
-        |> ReasonReact.arrayToElement
-      )
-      <div> (str(summary)) </div>
+      </div>
+      <div className=footer> (str(summary)) </div>
     </div>;
   }
 };
